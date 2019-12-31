@@ -1,0 +1,363 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin xmlns="http://www.urbancode.com/PluginXMLSchema_v1">
+    <header>
+        <identifier version="1" id="com.serena.air.plugin.Fortify-SCA" name="Fortify Static Code Analyzer"/>
+        <description>
+            The Micro Focus Fortify Static Code Analyzer plugin allows you to execute static code analysis
+            testing as part of a workflow.
+        </description>
+        <tag>Security/Fortify/Static Code Analyzer</tag>
+    </header>
+
+    <!-- ==================================== -->
+    <!-- Fortify SCA Update Rules             -->
+    <!-- ==================================== -->
+    <step-type name="Fortify SCA Update Rules">
+        <description>Download the latest Fortify Secure Coding Rulepacks.</description>
+        <properties>
+            <property name="updateOptions" required="false">
+                <property-ui type="textAreaBox" label="Update Options"
+                             description="A list of new-line separated options to add to the Update command."/>
+            </property>
+            <property name="fortifyPath" required="false">
+                <property-ui type="textBox" label="Fortify Executable Path"
+                             description="Full path to the Fortify executables on the Agent, leave empty to use the system path"/>
+            </property>
+            <property name="debugMode" required="false">
+                <property-ui type="checkBox" label="Debug Output" hidden="true"
+                             description="Select this option to display debug output during execution."/>
+            </property>
+        </properties>
+        <post-processing><![CDATA[
+        properties.put("Status", "Success");
+        if (properties.get("exitCode") != 0) {
+            properties.put("Status", "Failure");
+        }
+        else {
+            scanner.register("(?i)\[error\]",  function(lineNumber, line) {
+                commandOut.println("Received Error");
+                commandOut.println(lineNumber.toString() + " : " + line);
+                var errors = properties.get("Error");
+                if (errors == null) {
+                    errors = new java.util.ArrayList();
+                }
+                errors.add(line);
+                properties.put("Error", errors);
+
+                properties.put("Status", "Failure");
+            });
+            scanner.scan();
+
+            var errors = properties.get("Error");
+            if (errors == null) {
+                errors = new java.util.ArrayList();
+            }
+            properties.put("Error", errors.toString());
+        }
+     ]]></post-processing>
+        <command program="${GROOVY_HOME}/bin/groovy">
+            <arg value="-cp"/>
+            <arg path="classes:lib/*"/>
+            <arg file="sca_update.groovy"/>
+            <arg file="${PLUGIN_INPUT_PROPS}"/>
+            <arg file="${PLUGIN_OUTPUT_PROPS}"/>
+        </command>
+    </step-type>
+
+    <!-- ==================================== -->
+    <!-- Fortify SCA Clean                    -->
+    <!-- ==================================== -->
+    <step-type name="Fortify SCA Clean">
+        <description>Run a clean with the Fortify Source Analyzer.</description>
+        <properties>
+            <property name="buildId" required="true">
+                <property-ui type="textBox" label="Build Id"
+                             description="Fortify Static Code Analyzer Build Id."/>
+            </property>
+            <property name="analyzerOptions" required="false">
+                <property-ui type="textAreaBox" label="Additional Options"
+                             description="A new-line separated list of additional options to pass to the Fortify command."/>
+            </property>
+            <property name="fortifyPath" required="false">
+                <property-ui type="textBox" label="Fortify Executable Path"
+                             description="Full path to the Fortify executables on the Agent, leave empty to use the system path"/>
+            </property>
+            <property name="removeLog" required="false">
+                <property-ui type="checkBox" label="Delete Log"
+                             description="Select this option to delete a previous Fortify logs."/>
+            </property>
+            <property name="logFile" required="false">
+                <property-ui type="textBox" label="Log File" default-value="da-fortify.log"
+                             description="The name of the log file to create/append to during execution."/>
+            </property>
+            <property name="verboseMode" required="false">
+                <property-ui type="checkBox" label="Verbose Output"
+                             description="Select this option to display verbose output during execution."/>
+            </property>
+            <property name="debugMode" required="false">
+                <property-ui type="checkBox" label="Debug Output" hidden="true"
+                             description="Select this option to display debug output during execution."/>
+            </property>
+        </properties>
+        <post-processing><![CDATA[
+        properties.put("Status", "Success");
+        if (properties.get("exitCode") != 0) {
+            properties.put("Status", "Failure");
+        }
+        else {
+            scanner.register("(?i)\[error\]",  function(lineNumber, line) {
+                commandOut.println("Received Error");
+                commandOut.println(lineNumber.toString() + " : " + line);
+                var errors = properties.get("Error");
+                if (errors == null) {
+                    errors = new java.util.ArrayList();
+                }
+                errors.add(line);
+                properties.put("Error", errors);
+
+                properties.put("Status", "Failure");
+            });
+            scanner.scan();
+
+            var errors = properties.get("Error");
+            if (errors == null) {
+                errors = new java.util.ArrayList();
+            }
+            properties.put("Error", errors.toString());
+        }
+     ]]></post-processing>
+        <command program="${GROOVY_HOME}/bin/groovy">
+            <arg value="-cp"/>
+            <arg path="classes:lib/*"/>
+            <arg file="sca_clean.groovy"/>
+            <arg file="${PLUGIN_INPUT_PROPS}"/>
+            <arg file="${PLUGIN_OUTPUT_PROPS}"/>
+        </command>
+    </step-type>
+
+    <!-- ==================================== -->
+    <!-- Fortify SCA Translate                -->
+    <!-- ==================================== -->
+    <step-type name="Fortify SCA Translate">
+        <description>Run a build/translate with the Fortify Source Analyzer.</description>
+        <properties>
+            <property name="buildId" required="true">
+                <property-ui type="textBox" label="Build Id"
+                             description="Fortify Static Code Analyzer Build Id."/>
+            </property>
+            <property name="buildOptions" required="false">
+                <property-ui type="textAreaBox" label="Build/Translate Options"
+                             description="A list of new-line separated file-specifier build or translate options to add to the Fortify command. e.g. 'src/**/*.java'"/>
+            </property>
+            <property name="analyzerOptions" required="false">
+                <property-ui type="textAreaBox" label="Additional Options"
+                             description="A new-line separated list of additional options to pass to the Fortify command."/>
+            </property>
+            <property name="fortifyPath" required="false">
+                <property-ui type="textBox" label="Fortify Executable Path"
+                             description="Full path to the Fortify executables on the Agent, leave empty to use the system path"/>
+            </property>
+            <property name="logFile" required="false">
+                <property-ui type="textBox" label="Log File" default-value="da-fortify.log"
+                             description="The name of the log file to create/append to during execution."/>
+            </property>
+            <property name="verboseMode" required="false">
+                <property-ui type="checkBox" label="Verbose Output"
+                             description="Select this option to display verbose output during execution."/>
+            </property>
+            <property name="debugMode" required="false">
+                <property-ui type="checkBox" label="Debug Output" hidden="true"
+                             description="Select this option to display debug output during execution."/>
+            </property>
+        </properties>
+        <post-processing><![CDATA[
+        properties.put("Status", "Success");
+        if (properties.get("exitCode") != 0) {
+            properties.put("Status", "Failure");
+        }
+        else {
+            scanner.register("(?i)\[error\]",  function(lineNumber, line) {
+                commandOut.println("Received Error");
+                commandOut.println(lineNumber.toString() + " : " + line);
+                var errors = properties.get("Error");
+                if (errors == null) {
+                    errors = new java.util.ArrayList();
+                }
+                errors.add(line);
+                properties.put("Error", errors);
+
+                properties.put("Status", "Failure");
+            });
+            scanner.scan();
+
+            var errors = properties.get("Error");
+            if (errors == null) {
+                errors = new java.util.ArrayList();
+            }
+            properties.put("Error", errors.toString());
+        }
+     ]]></post-processing>
+        <command program="${GROOVY_HOME}/bin/groovy">
+            <arg value="-cp"/>
+            <arg path="classes:lib/*"/>
+            <arg file="sca_build.groovy"/>
+            <arg file="${PLUGIN_INPUT_PROPS}"/>
+            <arg file="${PLUGIN_OUTPUT_PROPS}"/>
+        </command>
+    </step-type>
+
+    <!-- ==================================== -->
+    <!-- Fortify SCA Scan                     -->
+    <!-- ==================================== -->
+    <step-type name="Fortify SCA Scan">
+        <description>Run a scan with the Fortify Source Analyzer.</description>
+        <properties>
+            <property name="buildId" required="true">
+                <property-ui type="textBox" label="Build Id"
+                             description="Fortify Static Code Analyzer Build Id."/>
+            </property>
+            <property name="scanOptions" required="false">
+                <property-ui type="textAreaBox" label="Scan Options"
+                             description="A list of new-line separated file-specifier scan options to add to the Fortify Scan command. e.g. 'src/**/*.java'"/>
+            </property>
+            <property name="resultsFile" required="false">
+                <property-ui type="textBox" label="Results File"
+                             description="The name of the results file to create, if left empty it will be set to 'da_fortify_scan.fpr'."/>
+            </property>
+            <property name="analyzerOptions" required="false">
+                <property-ui type="textAreaBox" label="Additional Options"
+                             description="A new-line separated list of additional options to pass to the Fortify command."/>
+            </property>
+            <property name="fortifyPath" required="false">
+                <property-ui type="textBox" label="Fortify Executable Path"
+                             description="Full path to the Fortify executables on the Agent, leave empty to use the system path"/>
+            </property>
+            <property name="logFile" required="false">
+                <property-ui type="textBox" label="Log File" default-value="da-fortify.log"
+                             description="The name of the log file to create/append to during execution."/>
+            </property>
+            <property name="quickScanMode" required="false">
+                <property-ui type="checkBox" label="Quick Scan"
+                             description="Select this option to perform a quick scan."/>
+            </property>
+            <property name="verboseMode" required="false">
+                <property-ui type="checkBox" label="Verbose Output"
+                             description="Select this option to display verbose output during execution."/>
+            </property>
+            <property name="debugMode" required="false">
+                <property-ui type="checkBox" label="Debug Output" hidden="true"
+                             description="Select this option to display debug output during execution."/>
+            </property>
+        </properties>
+        <post-processing><![CDATA[
+        properties.put("Status", "Success");
+        if (properties.get("exitCode") != 0) {
+            properties.put("Status", "Failure");
+        }
+        else {
+            scanner.register("(?i)\[error\]",  function(lineNumber, line) {
+                commandOut.println("Received Error");
+                commandOut.println(lineNumber.toString() + " : " + line);
+                var errors = properties.get("Error");
+                if (errors == null) {
+                    errors = new java.util.ArrayList();
+                }
+                errors.add(line);
+                properties.put("Error", errors);
+
+                properties.put("Status", "Failure");
+            });
+            scanner.scan();
+
+            var errors = properties.get("Error");
+            if (errors == null) {
+                errors = new java.util.ArrayList();
+            }
+            properties.put("Error", errors.toString());
+        }
+     ]]></post-processing>
+        <command program="${GROOVY_HOME}/bin/groovy">
+            <arg value="-cp"/>
+            <arg path="classes:lib/*"/>
+            <arg file="sca_scan.groovy"/>
+            <arg file="${PLUGIN_INPUT_PROPS}"/>
+            <arg file="${PLUGIN_OUTPUT_PROPS}"/>
+        </command>
+    </step-type>
+
+    <!-- ==================================== -->
+    <!--   SSC Upload                         -->
+    <!-- ==================================== -->
+    <step-type name="SSC Upload">
+        <description>Upload the results of a scan to Software Security Center.</description>
+        <properties>
+            <property name="resultsFile" required="false">
+                <property-ui type="textAreaBox" label="Results File" default-value="${prevStep/resultsFile}"
+                             description="The name of the results file to upload."/>
+            </property>
+            <property name="sscApplication" required="true">
+                <property-ui type="textBox" label="SSC Application Name" default-value="${p:application.name}"
+                             description="The name of the related application in Software Security Center."/>
+            </property>
+            <property name="sscApplicationVersion" required="true">
+                <property-ui type="textBox" label="SSC Version Name"
+                             description="The name of the related application version in Software Security Center."/>
+            </property>
+            <property name="sscServerUrl" required="true">
+                <property-ui type="textBox" default-value="${p:system/ssc.serverUrl}" label="SSC Server URL"
+                             description="The Software Security Center server URL, e.g. https://server:8080/ssc"/>
+            </property>
+            <property name="sscAuthToken" required="true">
+                <property-ui type="textBox" default-value="${p:system/ssc.authToken}" label="SSC Server Authentication Token"
+                             description="An authentication token to connect to Software Security Center."/>
+            </property>
+            <property name="analyzerOptions" required="false">
+                <property-ui type="textAreaBox" label="Additional Options"
+                             description="A new-line separated list of additional options to pass to the Fortify command."/>
+            </property>
+            <property name="fortifyPath" required="false">
+                <property-ui type="textBox" label="Fortify Executable Path"
+                             description="Full path to the Fortify executables on the Agent, leave empty to use the system path"/>
+            </property>
+            <property name="debugMode" required="false">
+                <property-ui type="checkBox" label="Debug Output" hidden="true"
+                             description="Select this option to display debug output during execution."/>
+            </property>
+        </properties>
+        <post-processing><![CDATA[
+        properties.put("Status", "Success");
+        if (properties.get("exitCode") != 0) {
+            properties.put("Status", "Failure");
+        }
+        else {
+            scanner.register("(?i)\[error\]",  function(lineNumber, line) {
+                commandOut.println("Received Error");
+                commandOut.println(lineNumber.toString() + " : " + line);
+                var errors = properties.get("Error");
+                if (errors == null) {
+                    errors = new java.util.ArrayList();
+                }
+                errors.add(line);
+                properties.put("Error", errors);
+
+                properties.put("Status", "Failure");
+            });
+            scanner.scan();
+
+            var errors = properties.get("Error");
+            if (errors == null) {
+                errors = new java.util.ArrayList();
+            }
+            properties.put("Error", errors.toString());
+        }
+     ]]></post-processing>
+        <command program="${GROOVY_HOME}/bin/groovy">
+            <arg value="-cp"/>
+            <arg path="classes:lib/*"/>
+            <arg file="ssc_upload.groovy"/>
+            <arg file="${PLUGIN_INPUT_PROPS}"/>
+            <arg file="${PLUGIN_OUTPUT_PROPS}"/>
+        </command>
+    </step-type>
+
+</plugin>
