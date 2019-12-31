@@ -34,6 +34,7 @@ final def  props  = new StepPropertiesHelper(apTool.getStepProperties(), true)
 //
 File workDir = new File('.').canonicalFile
 String updateOptions = props.optional('updateOptions')
+String updateUrl = props.optional('updateUrl')
 String fortifyPath = props.optional("fortifyPath")
 Boolean debugMode = props.optionalBoolean("debugMode", false)
 
@@ -48,6 +49,7 @@ println "----------------------------------------"
 // Print out each of the property values.
 //
 println "Working directory: ${workDir.canonicalPath}"
+println "Update URL: ${updateUrl}"
 println "Update Options: " + ((updateOptionsList.isEmpty()) ? "none defined" : updateOptionsList.toListString())
 println "Fortify Path: " + (fortifyPath ? fortifyPath : "not defined, using system path")
 println "Debug Output: ${debugMode}"
@@ -91,6 +93,11 @@ try {
     def commandLine = []
     commandLine.add(scaExe)
 
+    if (updateUrl) {
+        commandLine.add("-url")
+        commandLine.add(updateUrl)
+    }
+
     if (updateOptionsList) {
         updateOptionsList.each() { option ->
             commandLine.add(option)
@@ -98,7 +105,6 @@ try {
     }
 
     // print out command info
-    println("")
     println("Fortify command line: ${commandLine.join(' ')}")
     println("working directory: ${workDir.path}")
     println('===============================')
@@ -116,7 +122,6 @@ try {
     // print results
     println('===============================')
     println("command exit code: ${process.exitValue()}")
-    println("")
 
     exitCode = process.exitValue();
 } catch (StepFailedException e) {

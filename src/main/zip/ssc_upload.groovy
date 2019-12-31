@@ -35,6 +35,7 @@ final def  props  = new StepPropertiesHelper(apTool.getStepProperties(), true)
 File workDir = new File('.').canonicalFile
 String sscServerUrl = props.notNull("sscServerUrl")
 String sscAuthToken = props.optional("sscAuthToken")
+String sscCredsFile = props.optional("sscCredsFile")
 String resultsFile = props.optional('resultsFile', "da_fortify_scan.fpr")
 String sscApplication = props.notNull("sscApplication")
 String sscApplicationVersion = props.notNull("sscApplicationVersion")
@@ -55,6 +56,7 @@ println "----------------------------------------"
 println "Working directory: ${workDir.canonicalPath}"
 println "SSC Server URL: ${sscServerUrl}"
 println "SSC Authentication Token: ${sscAuthToken.replaceAll(".", "*")}"
+println "SSC Credentials File: " + (sscCredsFile ? "${sscCredsFile}" : "not defined")
 println "Results File: ${resultsFile}"
 println "SSC Application: ${sscApplication}"
 println "SSC Application Version: ${sscApplicationVersion}"
@@ -79,10 +81,6 @@ try {
     // Validation
     //
 
-    if (directoryOffset) {
-        workDir = new File(workDir, directoryOffset).canonicalFile
-    }
-
     if (fortifyPath) {
         scaExe = fortifyPath + File.separatorChar + "fortifyclient" + (windows ? ".bat" : "")
     } else {
@@ -99,24 +97,29 @@ try {
     // Build Command Line
     //
     def commandLine = []
-    commandLine.add(scaExe.absolutePath)
+    commandLine.add(scaExe)
 
     commandLine.add("uploadFPR")
     commandLine.add("-url")
     commandLine.add(sscServerUrl)
 
-    commandLine.add("authtoken")
-    commandLine.add(sscAuthToken)
+    if (sscAuthToken) {
+        commandLine.add("-authtoken")
+        commandLine.add(sscAuthToken)
+    }
+    if (sscCredsFile) {
+        commandLine.add("-credentialsFile")
+        commandLine.add(sscCredsFile)
+    }
 
-    commandLine.add("-project")
+    commandLine.add("-application")
     commandLine.add(sscApplication)
-    commandLine.add("-version")
+    commandLine.add("-applicationVersion")
     commandLine.add(sscApplicationVersion)
     commandLine.add("-f")
     commandLine.add(resultsFile)
 
     // print out command info
-    println("")
     println("Fortify command line: ${commandLine.join(' ')}")
     println("working directory: ${workDir.path}")
     println('===============================')
@@ -134,7 +137,6 @@ try {
     // print results
     println('===============================')
     println("command exit code: ${process.exitValue()}")
-    println("")
 
     exitCode = process.exitValue();
 } catch (StepFailedException e) {

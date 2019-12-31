@@ -34,15 +34,19 @@ final def  props  = new StepPropertiesHelper(apTool.getStepProperties(), true)
 //
 File workDir = new File('.').canonicalFile
 String buildId = props.notNull("buildId")
+Integer maxMem = props.optionalInt("maxMem", 0)
+String jvmOptions = props.optional("jvmOptions")
+String includes = props.optional("includes")
+String excludes = props.optional("excludes")
 String analyzerOptions = props.optional('analyzerOptions')
 String fortifyPath = props.optional("fortifyPath")
 String logFile = props.optional("logFile")
 Boolean verboseMode = props.optionalBoolean("verboseMode", false)
 Boolean debugMode = props.optionalBoolean("debugMode", false)
-String buildOptions = props.optional('buildOptions')
 
+def includesList = includes.split('[ \n\r]')?.findAll{ it && it.trim().length() > 0}
+def excludesList = excludes.split('[ \n\r]')?.findAll{ it && it.trim().length() > 0}
 def analyzerOptionsList = analyzerOptions.split('[ \n\r]')?.findAll{ it && it.trim().length() > 0}
-def buildOptionsList = buildOptions.split('[ \n\r]')?.findAll{ it && it.trim().length() > 0}
 def fUtils = new FortifyUtils()
 
 println "----------------------------------------"
@@ -54,7 +58,8 @@ println "----------------------------------------"
 //
 println "Working directory: ${workDir.canonicalPath}"
 println "Build Id: ${buildId}"
-println "Build Options: " + ((buildOptionsList.isEmpty()) ? "none defined" : buildOptionsList.toListString())
+println "Maximum heap memory (MB): " + (maxMem > 0 ? maxMem.toString() : "not defined")
+println "Additional JVM Options: " + (jvmOptions ? jvmOptions : "none defined")
 println "Additional Options: " + ((analyzerOptionsList.isEmpty()) ? "none defined" : analyzerOptionsList.toListString())
 println "Fortify Path: " + (fortifyPath ? fortifyPath : "not defined, using system path")
 println "Log File: ${logFile}"
@@ -99,18 +104,29 @@ try {
     //
     def commandLine = []
     commandLine.add(scaExe)
-
+    commandLine.add("-Dcom.fortify.sca.ProjectRoot=${workDir}"+File.separatorChar+".fortify")
+    if (maxMem) {
+        commandLine.add("-Xmx${maxMem}M")
+    }
+    if (jvmOptions) {
+        commandLine.add(jvmOptions)
+    }
     commandLine.add("-b")
     commandLine.add(buildId)
 
-    if (analyzerOptionsList) {
-        analyzerOptionsList.each() { option ->
+    if (includes) {
+        includesList.each() { option ->
             commandLine.add(option)
         }
     }
-
-    if (buildOptionsList) {
-        buildOptionsList.each() { option ->
+    if (excludes) {
+        commandLine.add("-exclude")
+        excludesList.each() { option ->
+            commandLine.add(option)
+        }
+    }
+    if (analyzerOptionsList) {
+        analyzerOptionsList.each() { option ->
             commandLine.add(option)
         }
     }
@@ -127,7 +143,6 @@ try {
     }
 
     // print out command info
-    println("")
     println("Fortify command line: ${commandLine.join(' ')}")
     println("working directory: ${workDir.path}")
     println('===============================')
@@ -145,7 +160,6 @@ try {
     // print results
     println('===============================')
     println("command exit code: ${process.exitValue()}")
-    println("")
 
     exitCode = process.exitValue();
 } catch (StepFailedException e) {

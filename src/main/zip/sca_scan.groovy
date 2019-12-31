@@ -34,6 +34,8 @@ final def  props  = new StepPropertiesHelper(apTool.getStepProperties(), true)
 //
 File workDir = new File('.').canonicalFile
 String buildId = props.notNull("buildId")
+Integer maxMem = props.optionalInt("maxMem", 0)
+String jvmOptions = props.optional("jvmOptions")
 String scanOptions = props.optional('scanOptions')
 String resultsFile = props.optional('resultsFile', "da_fortify_scan.fpr")
 String analyzerOptions = props.optional('analyzerOptions')
@@ -55,6 +57,8 @@ println "----------------------------------------"
 //
 println "Working directory: ${workDir.canonicalPath}"
 println "Build Id: ${buildId}"
+println "Maximum heap memory (MB): " + (maxMem > 0 ? maxMem.toString() : "not defined")
+println "Additional JVM Options: " + (jvmOptions ? jvmOptions : "none defined")
 println "Scan Options: " + ((scanOptionsList.isEmpty()) ? "none defined" : scanOptionsList.toListString())
 println "Results File: ${resultsFile}"
 println "Additional Options: " + ((analyzerOptionsList.isEmpty()) ? "none defined" : analyzerOptionsList.toListString())
@@ -101,6 +105,13 @@ try {
     //
     def commandLine = []
     commandLine.add(scaExe)
+    commandLine.add("-Dcom.fortify.sca.ProjectRoot=${workDir}"+File.separatorChar+".fortify")
+    if (maxMem) {
+        commandLine.add("-Xmx${maxMem}M")
+    }
+    if (jvmOptions) {
+        commandLine.add(jvmOptions)
+    }
 
     commandLine.add("-b")
     commandLine.add(buildId)
@@ -131,7 +142,6 @@ try {
     }
 
     // print out command info
-    println("")
     println("Fortify command line: ${commandLine.join(' ')}")
     println("working directory: ${workDir.path}")
     println('===============================')
@@ -149,7 +159,6 @@ try {
     // print results
     println('===============================')
     println("command exit code: ${process.exitValue()}")
-    println("")
 
     exitCode = process.exitValue();
 } catch (StepFailedException e) {

@@ -10,18 +10,22 @@
     </header>
 
     <!-- ==================================== -->
-    <!-- Fortify SCA Update Rules             -->
+    <!-- Update Fortify Rulepacks             -->
     <!-- ==================================== -->
-    <step-type name="Fortify SCA Update Rules">
-        <description>Download the latest Fortify Secure Coding Rulepacks.</description>
+    <step-type name="Update Fortify Rulepacks">
+        <description>Update Fortify Security Content (Rulepacks) prior to a scan.</description>
         <properties>
+            <property name="updateUrl" required="false">
+                <property-ui type="textAreaBox" label="Update Server URL"
+                             description="Update server URL from where rulepacks should be downloaded."/>
+            </property>
             <property name="updateOptions" required="false">
                 <property-ui type="textAreaBox" label="Update Options"
                              description="A list of new-line separated options to add to the Update command."/>
             </property>
             <property name="fortifyPath" required="false">
                 <property-ui type="textBox" label="Fortify Executable Path"
-                             description="Full path to the Fortify executables on the Agent, leave empty to use the system path"/>
+                             description="Full path to the Fortify executables on the Agent, leave empty if already on system path."/>
             </property>
             <property name="debugMode" required="false">
                 <property-ui type="checkBox" label="Debug Output" hidden="true"
@@ -34,7 +38,7 @@
             properties.put("Status", "Failure");
         }
         else {
-            scanner.register("(?i)\[error\]",  function(lineNumber, line) {
+            scanner.register("(?i)\\[error\\]",  function(lineNumber, line) {
                 commandOut.println("Received Error");
                 commandOut.println(lineNumber.toString() + " : " + line);
                 var errors = properties.get("Error");
@@ -68,11 +72,19 @@
     <!-- Fortify SCA Clean                    -->
     <!-- ==================================== -->
     <step-type name="Fortify SCA Clean">
-        <description>Run a clean with the Fortify Source Analyzer.</description>
+        <description>Clean up from a previous scan.</description>
         <properties>
             <property name="buildId" required="true">
-                <property-ui type="textBox" label="Build Id"
-                             description="Fortify Static Code Analyzer Build Id."/>
+                <property-ui type="textBox" label="Build ID"
+                             description="Unique identifier for the scan."/>
+            </property>
+            <property name="maxMem" required="false">
+                <property-ui type="textBox" label="Maximum heap memory (MB)"
+                             description="The maximum heap size for the JVM (-Xmx). This must be an integer value representing the amount of MB to allocate to the JVM heap."/>
+            </property>
+            <property name="jvmOptions" required="false">
+                <property-ui type="textBox" label="Additional JVM Options"
+                             description="Additional options to send to the JVM."/>
             </property>
             <property name="analyzerOptions" required="false">
                 <property-ui type="textAreaBox" label="Additional Options"
@@ -80,14 +92,14 @@
             </property>
             <property name="fortifyPath" required="false">
                 <property-ui type="textBox" label="Fortify Executable Path"
-                             description="Full path to the Fortify executables on the Agent, leave empty to use the system path"/>
+                             description="Full path to the Fortify executables on the Agent, leave empty if already on system path."/>
             </property>
             <property name="removeLog" required="false">
                 <property-ui type="checkBox" label="Delete Log"
-                             description="Select this option to delete a previous Fortify logs."/>
+                             description="Select this option to delete a previously created scan log."/>
             </property>
             <property name="logFile" required="false">
-                <property-ui type="textBox" label="Log File" default-value="da-fortify.log"
+                <property-ui type="textBox" label="Log Filename" default-value="da-fortify.log"
                              description="The name of the log file to create/append to during execution."/>
             </property>
             <property name="verboseMode" required="false">
@@ -105,7 +117,7 @@
             properties.put("Status", "Failure");
         }
         else {
-            scanner.register("(?i)\[error\]",  function(lineNumber, line) {
+            scanner.register("(?i)\\[error\\]",  function(lineNumber, line) {
                 commandOut.println("Received Error");
                 commandOut.println(lineNumber.toString() + " : " + line);
                 var errors = properties.get("Error");
@@ -139,15 +151,27 @@
     <!-- Fortify SCA Translate                -->
     <!-- ==================================== -->
     <step-type name="Fortify SCA Translate">
-        <description>Run a build/translate with the Fortify Source Analyzer.</description>
+        <description>Convert source code to intermediary files to use in a scan.</description>
         <properties>
             <property name="buildId" required="true">
-                <property-ui type="textBox" label="Build Id"
-                             description="Fortify Static Code Analyzer Build Id."/>
+                <property-ui type="textBox" label="Build ID"
+                             description="Unique identifier for the scan."/>
             </property>
-            <property name="buildOptions" required="false">
-                <property-ui type="textAreaBox" label="Build/Translate Options"
-                             description="A list of new-line separated file-specifier build or translate options to add to the Fortify command. e.g. 'src/**/*.java'"/>
+            <property name="maxMem" required="false">
+                <property-ui type="textBox" label="Maximum heap memory (MB)"
+                             description="The maximum heap size for the JVM (-Xmx). This must be an integer value representing the amount of MB to allocate to the JVM heap."/>
+            </property>
+            <property name="jvmOptions" required="false">
+                <property-ui type="textBox" label="Additional JVM Options"
+                             description="Additional options to send to the JVM."/>
+            </property>
+            <property name="includes" required="false">
+                <property-ui type="textAreaBox" label="Includes List"
+                             description="List of files/directories to include in the scan. Wildcards (** and *) are allowed (e.g. ./**/*.java). Start each file or path with a new line."/>
+            </property>
+            <property name="excludes" required="false">
+                <property-ui type="textAreaBox" label="Excludes List"
+                             description="List of files/directories to exclude from the scan. Wildcards (** and *) are allowed (e.g. ./**/*.java). Start each file or path with a new line."/>
             </property>
             <property name="analyzerOptions" required="false">
                 <property-ui type="textAreaBox" label="Additional Options"
@@ -155,7 +179,7 @@
             </property>
             <property name="fortifyPath" required="false">
                 <property-ui type="textBox" label="Fortify Executable Path"
-                             description="Full path to the Fortify executables on the Agent, leave empty to use the system path"/>
+                             description="Full path to the Fortify executables on the Agent, leave empty if already on system path."/>
             </property>
             <property name="logFile" required="false">
                 <property-ui type="textBox" label="Log File" default-value="da-fortify.log"
@@ -176,7 +200,7 @@
             properties.put("Status", "Failure");
         }
         else {
-            scanner.register("(?i)\[error\]",  function(lineNumber, line) {
+            scanner.register("(?i)\\[error\\]",  function(lineNumber, line) {
                 commandOut.println("Received Error");
                 commandOut.println(lineNumber.toString() + " : " + line);
                 var errors = properties.get("Error");
@@ -200,7 +224,7 @@
         <command program="${GROOVY_HOME}/bin/groovy">
             <arg value="-cp"/>
             <arg path="classes:lib/*"/>
-            <arg file="sca_build.groovy"/>
+            <arg file="sca_translate.groovy"/>
             <arg file="${PLUGIN_INPUT_PROPS}"/>
             <arg file="${PLUGIN_OUTPUT_PROPS}"/>
         </command>
@@ -210,11 +234,19 @@
     <!-- Fortify SCA Scan                     -->
     <!-- ==================================== -->
     <step-type name="Fortify SCA Scan">
-        <description>Run a scan with the Fortify Source Analyzer.</description>
+        <description>Run a scan with Fortify Source Analyzer.</description>
         <properties>
             <property name="buildId" required="true">
-                <property-ui type="textBox" label="Build Id"
-                             description="Fortify Static Code Analyzer Build Id."/>
+                <property-ui type="textBox" label="Build ID"
+                             description="Unique identifier for the scan."/>
+            </property>
+            <property name="maxMem" required="false">
+                <property-ui type="textBox" label="Maximum heap memory (MB)"
+                             description="The maximum heap size for the JVM (-Xmx). This must be an integer value representing the amount of MB to allocate to the JVM heap."/>
+            </property>
+            <property name="jvmOptions" required="false">
+                <property-ui type="textBox" label="Additional JVM Options"
+                             description="Additional options to send to the JVM."/>
             </property>
             <property name="scanOptions" required="false">
                 <property-ui type="textAreaBox" label="Scan Options"
@@ -230,7 +262,7 @@
             </property>
             <property name="fortifyPath" required="false">
                 <property-ui type="textBox" label="Fortify Executable Path"
-                             description="Full path to the Fortify executables on the Agent, leave empty to use the system path"/>
+                             description="Full path to the Fortify executables on the Agent, leave empty if already on system path."/>
             </property>
             <property name="logFile" required="false">
                 <property-ui type="textBox" label="Log File" default-value="da-fortify.log"
@@ -255,7 +287,7 @@
             properties.put("Status", "Failure");
         }
         else {
-            scanner.register("(?i)\[error\]",  function(lineNumber, line) {
+            scanner.register("(?i)\\[error\\]",  function(lineNumber, line) {
                 commandOut.println("Received Error");
                 commandOut.println(lineNumber.toString() + " : " + line);
                 var errors = properties.get("Error");
@@ -288,7 +320,7 @@
     <!-- ==================================== -->
     <!--   SSC Upload                         -->
     <!-- ==================================== -->
-    <step-type name="SSC Upload">
+    <step-type name="Fortify SSC Upload">
         <description>Upload the results of a scan to Software Security Center.</description>
         <properties>
             <property name="resultsFile" required="false">
@@ -307,9 +339,13 @@
                 <property-ui type="textBox" default-value="${p:system/ssc.serverUrl}" label="SSC Server URL"
                              description="The Software Security Center server URL, e.g. https://server:8080/ssc"/>
             </property>
-            <property name="sscAuthToken" required="true">
+            <property name="sscAuthToken" required="false">
                 <property-ui type="textBox" default-value="${p:system/ssc.authToken}" label="SSC Server Authentication Token"
-                             description="An authentication token to connect to Software Security Center."/>
+                             description="An AnalysisUploadToken authentication token to connect to Software Security Center."/>
+            </property>
+            <property name="sscCredsFile" required="false">
+                <property-ui type="textBox" label="Credentials File"
+                             description="Relative path to a credentials file containing 'user' and 'password' or 'authtoken' values"/>
             </property>
             <property name="analyzerOptions" required="false">
                 <property-ui type="textAreaBox" label="Additional Options"
@@ -317,7 +353,7 @@
             </property>
             <property name="fortifyPath" required="false">
                 <property-ui type="textBox" label="Fortify Executable Path"
-                             description="Full path to the Fortify executables on the Agent, leave empty to use the system path"/>
+                             description="Full path to the Fortify executables on the Agent, leave empty if already on system path."/>
             </property>
             <property name="debugMode" required="false">
                 <property-ui type="checkBox" label="Debug Output" hidden="true"
@@ -330,7 +366,7 @@
             properties.put("Status", "Failure");
         }
         else {
-            scanner.register("(?i)\[error\]",  function(lineNumber, line) {
+            scanner.register("(?i)\\[error\\]",  function(lineNumber, line) {
                 commandOut.println("Received Error");
                 commandOut.println(lineNumber.toString() + " : " + line);
                 var errors = properties.get("Error");
