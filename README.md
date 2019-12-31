@@ -13,6 +13,8 @@ This plugin is a work in progress but it is intended to provide the following st
 
 Note: this plugin is designed to be used with [Static Code Analyzer](https://www.microfocus.com/en-us/products/static-code-analysis-sast/overview) 
 standalone or when integrated with [Software Security Center](https://www.microfocus.com/en-us/products/software-security-assurance-sdlc/overview).
+
+The plugin requires that Fortify SCA Tools has already been installed on the machine where the DA Agent.
  
 ### Installing the plugin
  

@@ -16,7 +16,7 @@
         <description>Update Fortify Security Content (Rulepacks) prior to a scan.</description>
         <properties>
             <property name="updateUrl" required="false">
-                <property-ui type="textAreaBox" label="Update Server URL"
+                <property-ui type="textBox" label="Update Server URL"
                              description="Update server URL from where rulepacks should be downloaded."/>
             </property>
             <property name="updateOptions" required="false">
@@ -324,8 +324,8 @@
         <description>Upload the results of a scan to Software Security Center.</description>
         <properties>
             <property name="resultsFile" required="false">
-                <property-ui type="textAreaBox" label="Results File" default-value="${prevStep/resultsFile}"
-                             description="The name of the results file to upload."/>
+                <property-ui type="textBox" label="Results File"
+                             description="The name of the results file to use, if left empty it will be set to 'da_fortify_scan.fpr'."/>
             </property>
             <property name="sscApplication" required="true">
                 <property-ui type="textBox" label="SSC Application Name" default-value="${p:application.name}"
